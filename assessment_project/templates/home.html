@@ -1,0 +1,183 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Privacy Risk Scanner</title>
+
+    <!-- Bootstrap 5 CSS -->
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+
+    <style>
+        body {
+            display: flex;
+            height: 100vh;
+            margin: 0;
+            background-color: #f8f9fa;
+        }
+        .sidebar {
+            width: 250px;
+            background: #007bff;
+            color: white;
+            padding: 20px;
+        }
+        .sidebar h3 {
+            text-align: center;
+        }
+        .nav-link {
+            color: white !important;
+            font-size: 16px;
+            padding: 10px;
+            display: block;
+        }
+        .nav-link:hover {
+            background: rgba(255, 255, 255, 0.2);
+        }
+        .content {
+            flex-grow: 1;
+            padding: 20px;
+        }
+        .btn-primary {
+            width: 100%;
+        }
+        #loading {
+            display: none;
+            text-align: center;
+            font-weight: bold;
+            color: #dc3545;
+        }
+        .spinner {
+            display: inline-block;
+            width: 1.5rem;
+            height: 1.5rem;
+            border: 3px solid rgba(0, 0, 0, 0.2);
+            border-top: 3px solid #007bff;
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+            margin-left: 10px;
+        }
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+    </style>
+</head>
+<body>
+
+    <!-- Sidebar -->
+    <div class="sidebar">
+        <h3>Privacy Scanner</h3>
+        <hr>
+        <ul class="nav flex-column">
+            <li class="nav-item"><a class="nav-link" href="#" onclick="showSection('scan')">🛠 New Scan</a></li>
+            <li class="nav-item"><a class="nav-link" href="#" onclick="showSection('results')">📊 Scan Results</a></li>
+        </ul>
+        <hr>
+        <button class="btn btn-danger w-100" onclick="logout()">🚪 Logout</button>
+        <p class="text-center mt-3">&copy; 2025 Privacy Scanner</p>
+    </div>
+
+    <!-- Main Content -->
+    <div class="content">
+        <!-- Scan Form Section -->
+        <div id="scanSection">
+            <h3>Start a Privacy Scan</h3>
+            <form id="scanForm">
+                <div class="mb-3">
+                    <label for="url" class="form-label">Enter Website URL:</label>
+                    <input type="url" class="form-control" id="url" name="url" placeholder="https://example.com" required>
+                </div>
+                <button type="submit" class="btn btn-primary">🔍 Start Scan</button>
+                <p id="loading">
+                    <span class="spinner"></span> Scanning in progress...
+                </p>
+            </form>
+        </div>
+
+         <!-- Scan Results Section -->
+        <div id="resultsSection" style="display: none;">
+            <h3>Scan Results</h3>
+            <div id="scanResults" class="table-responsive"></div>
+            <div id="recommendations" class="mt-4"></div>
+        </div>
+    </div>
+
+    <script>
+        function showSection(section) {
+            document.getElementById('scanSection').style.display = section === 'scan' ? 'block' : 'none';
+            document.getElementById('resultsSection').style.display = section === 'results' ? 'block' : 'none';
+        }
+
+        document.getElementById('scanForm').addEventListener('submit', async function(e) {
+            e.preventDefault();
+            let url = document.getElementById('url').value;
+            let loadingText = document.getElementById('loading');
+            loadingText.style.display = 'block'; // Show loading indicator
+
+            let response = await fetch('/api/scan', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ url: url })
+            });
+
+            let data = await response.json();
+            loadingText.style.display = 'none'; // Hide loading indicator
+
+            if (data.error) {
+                Swal.fire({ icon: 'error', title: 'Error', text: data.error });
+                return;
+            }
+
+            showSection('results');
+            checkScanResults(data.scan_id);
+        });
+
+        async function checkScanResults(scan_id) {
+            let response = await fetch(`/api/scan_results/${scan_id}`);
+            let resultData = await response.json();
+
+            document.getElementById('scanResults').innerHTML = `
+                <h4>Scan Results for ${resultData.target}</h4>
+                <table class="table table-bordered">
+                    <tr><th>Scan ID</th><td>${resultData.scan_id}</td></tr>
+                    <tr><th>Status</th><td>${resultData.status}</td></tr>
+                    <tr><th>🔹 Security Headers</th><td><a href="${resultData.security_headers_results?.security_headers_report}" target="_blank">View Security Headers Report</a></td></tr>
+                    <tr><th>🔹 DuckDuckGo Trackers</th><td>Trackers Found: ${resultData.duckduckgo_results?.trackers_found?.length || 0}</td></tr>
+                    <tr><th>Privacy Score</th><td>${resultData.duckduckgo_results?.privacy_score || "No privacy data available"}</td></tr>
+                    <tr><th>🔹 Google Safe Browsing</th><td>Risk Level: ${resultData.google_safe_browsing_results?.risk || "Error fetching data"}</td></tr>
+                    <tr><th>Details</th><td>${resultData.google_safe_browsing_results?.details || "No known threats"}</td></tr>
+                </table>
+            `;
+
+            if (resultData.recommendations) {
+                displayRecommendations(resultData.recommendations);
+            }
+        }
+
+        function displayRecommendations(recommendations) {
+            let recommendationHTML = "<h4>Security Recommendations</h4>";
+            for (const category in recommendations) {
+                if (recommendations[category].length > 0) {
+                    recommendationHTML += `<h5>${category.toUpperCase()}</h5><ul class="list-group">`;
+                    recommendations[category].forEach(rec => {
+                        recommendationHTML += `
+                            <li class="list-group-item">
+                                <strong>${rec.issue} (${rec.severity})</strong>
+                                <p>${rec.explanation}</p>
+                                <p><strong>Fix:</strong> ${rec.fix}</p>
+                            </li>
+                        `;
+                    });
+                    recommendationHTML += "</ul>";
+                }
+            }
+            document.getElementById('recommendations').innerHTML = recommendationHTML;
+        }
+
+        function logout() {
+            window.location.href = "/logout";
+        }
+    </script>
+</body>
+</html>
