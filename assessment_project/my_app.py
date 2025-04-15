@@ -22,8 +22,8 @@ ts = URLSafeTimedSerializer(app.config["SECRET_KEY"])
 MOZILLA_OBSERVATORY_API = "https://http-observatory.security.mozilla.org/api/v1/analyze"
 
 # Mailtrap SMTP Config
-MAILTRAP_USERNAME = "12856b4a0a14bb"
-MAILTRAP_PASSWORD = "da8c2b95c78e0e"
+MAILTRAP_USERNAME = ""
+MAILTRAP_PASSWORD = ""
 MAILTRAP_HOST = "smtp.mailtrap.io"
 MAILTRAP_PORT = 2525
 
