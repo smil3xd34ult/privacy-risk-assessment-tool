@@ -19,6 +19,13 @@ A full-stack privacy and security scanning tool built with **Flask**, **MongoDB*
 - Bootstrap / Custom CSS
 - REST APIs
 
+## Key Note
+# Mailtrap SMTP Config
+MAILTRAP_USERNAME = "ADD_YOUR_MAILTRAP_USERNAME"
+MAILTRAP_PASSWORD = "ADD_YOUR_MAILTRAP_PASSWORD"
+MAILTRAP_HOST = "smtp.mailtrap.io"
+MAILTRAP_PORT = 2525
+
 ## How to Run
 
 ```bash
