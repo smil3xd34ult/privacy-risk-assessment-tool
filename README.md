@@ -21,10 +21,8 @@ A full-stack privacy and security scanning tool built with **Flask**, **MongoDB*
 
 ## Key Note
 # Mailtrap SMTP Config
-MAILTRAP_USERNAME = "ADD_YOUR_MAILTRAP_USERNAME"
-MAILTRAP_PASSWORD = "ADD_YOUR_MAILTRAP_PASSWORD"
-MAILTRAP_HOST = "smtp.mailtrap.io"
-MAILTRAP_PORT = 2525
+- MAILTRAP_USERNAME = "ADD_YOUR_MAILTRAP_USERNAME"
+- MAILTRAP_PASSWORD = "ADD_YOUR_MAILTRAP_PASSWORD"
 
 ## How to Run
 
